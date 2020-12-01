@@ -3,6 +3,8 @@ This is an implementation of instantaneous pulse rate estimation algorithm descr
 
 The dataset comes from the author's [github](https://github.com/WillionXU/CIME-PPG-dataset-2018/).
 
-Please refer to Jupyter Notebooks in `/notebooks` for implementation details.
+Please refer to Jupyter Notebooks in `/notebooks` for dataset pre-processing details.
 They are arranged in the following order:
-`data_prepatation.ipynb` -> `biLSTM_train.ipynb`.
+`data_pre_processing.ipynb` -> `label_making.ipynb`.
+
+A multi-layer bi-directional LSTM is implemented to classify the pulse boundaries. Please refer to `train.py` for details.

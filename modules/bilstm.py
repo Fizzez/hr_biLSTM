@@ -7,18 +7,37 @@ import torch.nn as nn
 
 
 class BiLSTM(nn.Module):
-    def __init__(self, input_size, hidden_size, num_layers, num_classes, device):
+    def __init__(self, device):
         super(BiLSTM, self).__init__()
         self.device = device
-        self.hidden_size = hidden_size
-        self.num_layers = num_layers
-        self.lstm = nn.LSTM(input_size, hidden_size, num_layers, batch_first=True, bidirectional=True)
-        self.fc = nn.Linear(hidden_size*2, num_classes)
+        self.input_size = 3     # feature arr dimension is 3 (ppg, x_acce, y_gyro)
+        self.lstm_hidden_size_lst = [100, 50, 50, 20]
+
+        # self.lstm_1 = nn.LSTM(self.input_size, hidden_size=self.lstm_hidden_size_lst[0],
+        #                       num_layers=1, bidirectional=True)
+        # self.lstm_2 = nn.LSTM(self.input_size, hidden_size=self.lstm_hidden_size_lst[1],
+        #                       num_layers=1, bidirectional=True)
+        # self.lstm_3 = nn.LSTM(self.input_size, hidden_size=self.lstm_hidden_size_lst[2],
+        #                       num_layers=1, bidirectional=True)
+        # self.lstm_4 = nn.LSTM(self.input_size, hidden_size=self.lstm_hidden_size_lst[3],
+        #                       num_layers=1, bidirectional=True)
+
+        self.multi_layer_bilstm = nn.Sequential(
+            nn.LSTM(self.input_size, hidden_size=self.lstm_hidden_size_lst[0],
+                    num_layers=1, bidirectional=True),
+            nn.LSTM(1, hidden_size=self.lstm_hidden_size_lst[1],
+                    num_layers=1, bidirectional=True),
+            nn.LSTM(1, hidden_size=self.lstm_hidden_size_lst[2],
+                    num_layers=1, bidirectional=True),
+            nn.LSTM(1, hidden_size=self.lstm_hidden_size_lst[3],
+                    num_layers=1, bidirectional=True)
+        )
+        self.softmax = nn.Softmax(dim=0)
 
     def forward(self, x):
-        h0 = torch.zeros(self.num_layers*2, x.size(0), self.hidden_size).to(self.device)
-        c0 = torch.zeros(self.num_layers*2, x.size(0), self.hidden_size).to(self.device)
+        # h0 = torch.zeros(self.num_layers*2, x.size(0), self.hidden_size).to(self.device)
+        # c0 = torch.zeros(self.num_layers*2, x.size(0), self.hidden_size).to(self.device)
 
-        out, _ = self.lstm(x, (h0, c0))
-        out = self.fc(out[:, -1, :])
-        return out
+        out_lstm, _ = self.multi_layer_bilstm(x)
+        out_softmax = self.softmax(out_lstm)
+        return torch.where(out_softmax >= 0.5, 1, 0)
