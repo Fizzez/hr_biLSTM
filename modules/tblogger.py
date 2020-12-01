@@ -2,6 +2,7 @@
 Utilities used in pytorch tasks.
 """
 
+from pathlib import Path
 import torch.utils.tensorboard as tb
 
 
@@ -12,6 +13,8 @@ class TBLogger:
     """
     def __init__(self, log_dir):
         """ Create a summary writer object logging to log_dir."""
+        log_dir = Path(log_dir)
+        log_dir.mkdir(exist_ok=True)
         self.writer = tb.SummaryWriter(log_dir=log_dir)
 
     def scalar_summary(self, tag, value, step):
