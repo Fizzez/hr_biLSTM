@@ -13,28 +13,23 @@ class BiLSTM(nn.Module):
         self.seq_len = seq_len
         self.lstm_hidden_size_lst = [100, 50, 50, 20]
 
-        # self.lstm_1 = nn.LSTM(self.input_size, hidden_size=self.lstm_hidden_size_lst[0],
-        #                       num_layers=1, bidirectional=True)
-        # self.lstm_2 = nn.LSTM(self.input_size, hidden_size=self.lstm_hidden_size_lst[1],
-        #                       num_layers=1, bidirectional=True)
-        # self.lstm_3 = nn.LSTM(self.input_size, hidden_size=self.lstm_hidden_size_lst[2],
-        #                       num_layers=1, bidirectional=True)
-        # self.lstm_4 = nn.LSTM(self.input_size, hidden_size=self.lstm_hidden_size_lst[3],
-        #                       num_layers=1, bidirectional=True)
-
-        self.multi_layer_bilstm = nn.Sequential(
-            nn.LSTM(self.input_size, hidden_size=self.lstm_hidden_size_lst[0],
-                    num_layers=1, bidirectional=True),
-            nn.LSTM(self.lstm_hidden_size_lst[0], hidden_size=self.lstm_hidden_size_lst[1],
-                    num_layers=1, bidirectional=True),
-            nn.LSTM(self.lstm_hidden_size_lst[1], hidden_size=self.lstm_hidden_size_lst[2],
-                    num_layers=1, bidirectional=True),
-            nn.LSTM(self.lstm_hidden_size_lst[2], hidden_size=self.lstm_hidden_size_lst[3],
-                    num_layers=1, bidirectional=True)
-        )
-        self.softmax = nn.Softmax(dim=0)
+        self.lstm_1 = nn.LSTM(self.input_size, hidden_size=self.lstm_hidden_size_lst[0]//2,
+                              num_layers=1, bidirectional=True)
+        self.lstm_2 = nn.LSTM(self.lstm_hidden_size_lst[0], hidden_size=self.lstm_hidden_size_lst[1]//2,
+                              num_layers=1, bidirectional=True)
+        self.lstm_3 = nn.LSTM(self.lstm_hidden_size_lst[1], hidden_size=self.lstm_hidden_size_lst[2]//2,
+                              num_layers=1, bidirectional=True)
+        self.lstm_4 = nn.LSTM(self.lstm_hidden_size_lst[2], hidden_size=self.lstm_hidden_size_lst[3]//2,
+                              num_layers=1, bidirectional=True)
+        self.fc = nn.Linear(self.lstm_hidden_size_lst[3], 2)
+        self.softmax = nn.Softmax(dim=2)
 
     def forward(self, x):
-        out_lstm, _ = self.multi_layer_bilstm(x)
-        out_softmax = self.softmax(out_lstm)
-        return torch.where(out_softmax >= 0.5, 1, 0)
+        out_lstm_1, _ = self.lstm_1(x)
+        out_lstm_2, _ = self.lstm_2(out_lstm_1)
+        out_lstm_3, _ = self.lstm_3(out_lstm_2)
+        out_lstm_4, _ = self.lstm_4(out_lstm_3)
+        out_fc = self.fc(out_lstm_4)
+        out_softmax = self.softmax(out_fc)
+        out = torch.flatten(out_softmax, start_dim=0, end_dim=1)
+        return out

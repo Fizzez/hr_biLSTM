@@ -8,3 +8,8 @@ They are arranged in the following order:
 `data_pre_processing.ipynb` -> `label_making.ipynb`.
 
 A multi-layer bi-directional LSTM is implemented to classify the pulse boundaries. Please refer to `train.py` for details.
+
+TODO:
+- Not sure the meaning of the output layer - softmax, add a fully connected layer before.
+- Should this structure be seq2seq?
+- Train model on GCP
